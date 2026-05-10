@@ -22,7 +22,7 @@ jobs:
 
       - name: Build Site
         run: |
-          npm run build
+          npm run build:node
           # 如果你的项目有特殊的构建命令，比如 generate 或者其他的，请替换上面这行
 
       - name: Deploy to GitHub Pages
