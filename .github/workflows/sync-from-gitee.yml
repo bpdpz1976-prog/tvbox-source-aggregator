@@ -31,20 +31,21 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages
-          # 关键修改：保留 gh-pages 分支上已有的文件，防止覆盖
-          keep_files: true
-          # 关键修改：强制推送，确保更新
-          force_orphan: false
-
-      # 新增步骤：专门处理前端文件
-      - name: Deploy Public Files
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # 指定 public 目录作为发布源
-          publish_dir: ./public
-          publish_branch: gh-pages
-          # 关键：不要清空目录，我们要把网页文件和 server.js 放在一起
-          keep_files: true
+          publish_dir: ./
+          # 强制推送，覆盖 gh-pages 分支的所有内容
+          force: true
+          # 排除不需要的文件，只保留网页和 server.js
+          exclude: |
+            .git
+            .github
+            README.md
+            package.json
+            package-lock.json
+            .gitignore
+            # 排除源文件，只保留编译后的文件
+            src/
+            # 排除测试文件
+            test/
+            # 排除其他不需要的文件
+            .eslintrc.js
+            .prettierrc
