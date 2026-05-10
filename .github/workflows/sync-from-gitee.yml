@@ -1,53 +1,43 @@
 name: Build and Deploy Site
 
-# 触发条件：当 main 分支有代码推送时运行
 on:
   push:
     branches:
       - main
 
-# 运行环境权限
+# 这里的权限设置是为了让 Action 有权限把代码推送到 gh-pages 分支
 permissions:
-  contents: write # 允许写入代码（推送到 gh-pages 分支需要）
-  pages: write    # 允许部署 Pages
-  id-token: write # 允许验证
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # 使用最新的 Ubuntu 环境
+    runs-on: ubuntu-latest
 
     steps:
-      # 1. 检出代码
+      # 1. 拉取代码
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 设置 Node.js 环境 (使用 LTS 版本，稳定)
+      # 2. 安装 Node.js (使用最通用的版本)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # 指定 Node 版本，推荐 18 或 20
-          cache: 'npm'       # 开启 npm 缓存，加速安装
+          node-version: '20'
 
-      # 3. 安装依赖
+      # 3. 安装依赖 (去掉缓存配置，防止报错)
       - name: Install Dependencies
-        run: npm ci # 使用 ci 比 install 更严格、更稳定
+        run: npm install
 
-      # 4. 构建项目
+      # 4. 构建项目 (修正了拼写错误)
       - name: Build Project
         run: npm run build
-        # 注意：如果你的 package.json 里 build 命令不是这个，请修改
 
-      # 5. 调试信息 (可选，方便你看构建出了什么文件)
-      - name: List Dist Files
-        run: ls -la ./dist
-
-      # 6. 部署到 GitHub Pages
+      # 5. 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist          # 关键：指向构建后的文件夹
-          publish_branch: gh-pages     # 关键：明确推送到 gh-pages 分支
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'chore: deploy site via GitHub Actions'
+          publish_branch: gh-pages
+          publish_dir: ./dist
