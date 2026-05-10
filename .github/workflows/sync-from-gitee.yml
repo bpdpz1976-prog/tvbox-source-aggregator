@@ -1,32 +1,38 @@
 name: Build and Deploy Site
 
+# 👇 必须添加这一段，赋予写入权限
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 * * * *' # 每小时自动运行
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
 
       - name: Build Site
-        run: |
-          npm run build:node
-          # 如果你的项目有特殊的构建命令，比如 generate 或者其他的，请替换上面这行
+        run: npm run build:node
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist # 假设构建产物在 dist 目录，如果是 public 或其他目录请修改
+          publish_dir: ./public
+          # 如果你的构建输出目录不是 public，请修改上面这一行
+          # 例如：publish_dir: ./dist
