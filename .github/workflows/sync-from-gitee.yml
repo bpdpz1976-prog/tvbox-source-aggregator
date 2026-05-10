@@ -5,38 +5,46 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Project
+      - name: Install Dependencies & Build
         run: |
+          npm install
+          # 运行构建脚本，生成 server.js
           npm run build:node
-          # 调试：列出 dist 目录内容，确认 index.html 是否存在
-          ls -la dist
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          # 强制覆盖，防止缓存
-          force_orphan: true
+          publish_dir: .
+          publish_branch: gh-pages
+          # 关键修改：保留 gh-pages 分支上已有的文件，防止覆盖
+          keep_files: true
+          # 关键修改：强制推送，确保更新
+          force_orphan: false
+
+      # 新增步骤：专门处理前端文件
+      - name: Deploy Public Files
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # 指定 public 目录作为发布源
+          publish_dir: ./public
+          publish_branch: gh-pages
+          # 关键：不要清空目录，我们要把网页文件和 server.js 放在一起
+          keep_files: true
