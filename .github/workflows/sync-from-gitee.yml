@@ -1,6 +1,6 @@
 name: Build and Deploy Site
 
-# 👇 权限设置
+# 👇 必须添加这一段，赋予写入权限
 permissions:
   contents: write
   pages: write
@@ -13,39 +13,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1. 拉取代码
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # 2. 设置 Node.js 环境
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3. 安装依赖
       - name: Install dependencies
         run: npm install
 
+      # 4. 执行构建 (注意：这里生成的通常是 dist 文件夹)
       - name: Build Site
         run: npm run build:node
 
-      # 👇 新增一步：自动查找构建出来的文件夹
-      - name: Find Dist Directory
-        id: find_dir
-        run: |
-          # 优先找 dist，如果没有就找 public
-          if [ -d "dist" ]; then
-            echo "dir=dist" >> $GITHUB_OUTPUT
-          elif [ -d "public" ]; then
-            echo "dir=public" >> $GITHUB_OUTPUT
-          else
-            echo "未找到 dist 或 public 目录，请检查构建命令"
-            exit 1
-          fi
+      # 5. 调试步骤：列出文件看看 (可选，方便排查)
+      - name: List files
+        run: ls -la
 
+      # 6. 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # 👇 这里使用上面自动找到的目录
-          publish_dir: ./${{ steps.find_dir.outputs.dir }}
+          # 👇 关键点：这里必须写 ./dist，因为 Vite 默认输出 dist
+          publish_dir: ./dist
