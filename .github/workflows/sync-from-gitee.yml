@@ -1,27 +1,32 @@
-name: Sync from Gitee
+name: Build and Deploy Site
+
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 * * * *' # 每小时自动运行
 
 jobs:
-  sync:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: 同步 Gitee 到 GitHub（IP 直连版）
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Site
         run: |
-          # 配置 Git 用户信息
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          
-          # 用 GitHub 的官方 IP 地址替换域名，绕过 DNS 解析问题
-          echo "140.82.112.4 github.com" >> /etc/hosts
-          
-          # 克隆上游仓库
-          git clone --bare https://gitee.com/tengxiaobao/tvbox-source-aggregator.git upstream
-          cd upstream
-          
-          # 使用带令牌和 IP 地址的 URL 推送
-          git push --mirror https://${{ secrets.GITHUB_TOKEN }}@140.82.112.4/${{ github.repository }}.git
+          npm run build
+          # 如果你的项目有特殊的构建命令，比如 generate 或者其他的，请替换上面这行
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist # 假设构建产物在 dist 目录，如果是 public 或其他目录请修改
