@@ -22,19 +22,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
-      # 关键修改：这里改成了 build:node
       - name: Build Project
-        run: npm run build:node
+        run: |
+          npm run build:node
+          # 调试：列出 dist 目录内容，确认 index.html 是否存在
+          ls -la dist
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          # 注意：这里需要确认 build:node 生成的文件夹名字
-          # 通常是 dist, public, 或者 build。如果报错找不到目录，请告诉我生成的文件夹叫啥
           publish_dir: ./dist
+          # 强制覆盖，防止缓存
+          force_orphan: true
