@@ -1,6 +1,6 @@
 name: Build and Deploy Site
 
-# 👇 必须添加这一段，赋予写入权限
+# 👇 权限设置
 permissions:
   contents: write
   pages: write
@@ -29,10 +29,23 @@ jobs:
       - name: Build Site
         run: npm run build:node
 
+      # 👇 新增一步：自动查找构建出来的文件夹
+      - name: Find Dist Directory
+        id: find_dir
+        run: |
+          # 优先找 dist，如果没有就找 public
+          if [ -d "dist" ]; then
+            echo "dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "public" ]; then
+            echo "dir=public" >> $GITHUB_OUTPUT
+          else
+            echo "未找到 dist 或 public 目录，请检查构建命令"
+            exit 1
+          fi
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          # 如果你的构建输出目录不是 public，请修改上面这一行
-          # 例如：publish_dir: ./dist
+          # 👇 这里使用上面自动找到的目录
+          publish_dir: ./${{ steps.find_dir.outputs.dir }}
