@@ -1,4 +1,4 @@
-name: Build and Deploy Site
+name: Sync and Deploy
 
 on:
   push:
@@ -6,46 +6,42 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Source Code
         uses: actions/checkout@v3
         with:
-          persist-credentials: false
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install Dependencies & Build
+      - name: Prepare Deployment Files
         run: |
-          npm install
-          # 运行构建脚本，生成 server.js
-          npm run build:node
+          # 1. 创建一个临时目录用来存放要发布的文件
+          mkdir -p ./deploy-dist
+
+          # 2. 复制 public 文件夹下的所有内容 (网页文件)
+          # 注意：这里假设你的网页文件在 public 目录下
+          cp -r public/* ./deploy-dist/
+
+          # 3. 复制 server.js (如果存在)
+          # 这样既保证了网页能访问，也保证了 Docker 能找到 server.js
+          if [ -f "server.js" ]; then
+            cp server.js ./deploy-dist/
+          fi
+
+          # 4. 复制 .nojekyll (防止 GitHub Pages 忽略特定文件)
+          if [ -f ".nojekyll" ]; then
+            cp .nojekyll ./deploy-dist/
+          fi
+
+          # 列出文件确认一下 (调试用)
+          ls -la ./deploy-dist/
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          # 强制推送，覆盖 gh-pages 分支的所有内容
-          force: true
-          # 排除不需要的文件，只保留网页和 server.js
-          exclude: |
-            .git
-            .github
-            README.md
-            package.json
-            package-lock.json
-            .gitignore
-            # 排除源文件，只保留编译后的文件
-            src/
-            # 排除测试文件
-            test/
-            # 排除其他不需要的文件
-            .eslintrc.js
-            .prettierrc
+          publish_dir: ./deploy-dist
+          # 强制推送到 gh-pages 分支
+          destination_dir: ./
