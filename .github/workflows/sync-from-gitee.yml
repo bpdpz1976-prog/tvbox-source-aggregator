@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-# 这里的权限设置是为了让 Action 有权限把代码推送到 gh-pages 分支
 permissions:
   contents: write
   pages: write
@@ -16,28 +15,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 拉取代码
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 安装 Node.js (使用最通用的版本)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. 安装依赖 (去掉缓存配置，防止报错)
       - name: Install Dependencies
         run: npm install
 
-      # 4. 构建项目 (修正了拼写错误)
+      # 关键修改：这里改成了 build:node
       - name: Build Project
-        run: npm run build
+        run: npm run build:node
 
-      # 5. 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
+          # 注意：这里需要确认 build:node 生成的文件夹名字
+          # 通常是 dist, public, 或者 build。如果报错找不到目录，请告诉我生成的文件夹叫啥
           publish_dir: ./dist
